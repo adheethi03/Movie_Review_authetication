@@ -1,0 +1,13 @@
+const express=require("express")
+const {signup,signin,adminlogout,userlogout}=require("../cntlr/authenticationcntrl")
+const {user}=require("../rotes/user")
+const {admin}=require("../rotes/admin")
+const router=express.Router()
+const upload=require("../middleware/upload")
+router.post('/signup',upload.single("profilepic"),signup)
+router.post("/login",signin)
+router.post("/admin/logout",adminlogout)
+router.post("/user/logout",userlogout)
+router.post("/user",user)
+router.post("/admin",admin)
+module.exports = router;
