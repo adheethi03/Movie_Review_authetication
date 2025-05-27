@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const app = express();
 const port = 3000;
 const auth = require('./rotes/authrout');
-
+const adm=require("./rotes/admin")
+const usr=require('./rotes/user')
 app.use(express.json());  // Always good to parse JSON
 
 app.get('/', (req, res) => {
@@ -11,7 +12,8 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api', auth);  // Mount auth routes at /api
-
+app.use("/adm",adm)
+app.use('/usr',usr)
 async function main() {
   await mongoose.connect("mongodb+srv://adheethi2003:2ySCBdVEiftjJT6@cluster0.iio96.mongodb.net/");
 }
