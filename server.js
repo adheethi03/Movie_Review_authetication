@@ -11,8 +11,9 @@ const usr = require('./rotes/user');
 const cors = require("cors");
 
 app.use(cors({
-  origin: ["http://localhost:5173", "https://chroplex-frontend.vercel.app"],
-  credentials: true
+  origin: ["http://localhost:5173" || "https://chroplex-frontend.vercel.app"],
+  credentials: true,
+  methods:["GET","POST","PUT","DELETE"]
 }));
 app.use(express.json());  // parse JSON
 
