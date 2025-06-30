@@ -1,38 +1,55 @@
 const express = require('express');
 const mongoose = require('mongoose');
-require("dotenv").config(); 
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+require("dotenv").config();
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-const auth = require('./rotes/authrout'); 
-const adm = require("./rotes/admin"); 
-const usr = require('./rotes/user'); 
-const cors = require("cors");
+// Import routes
+const authRoutes = require('./rotes/authrout');
+const adminRoutes = require('./rotes/admin');
+const userRoutes = require('./rotes/user');
 
+// Middleware
 app.use(cors({
-  origin: ["http://localhost:5173" || "https://chroplex-frontend.vercel.app"],
+  origin: ["http://localhost:5173", "https://chroplex-frontend.vercel.app"],
   credentials: true,
-  methods:["GET","POST","PUT","DELETE"]
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders:["Content-Type","Authorization"]
 }));
-app.use(express.json());  // parse JSON
 
-app.get('/', (req, res) => { 
-  res.send('Hello World!'); 
-}); 
- 
-app.use('/api', auth);  
-app.use("/adm", adm); 
-app.use('/usr', usr); 
+app.use(express.json());
+app.use(cookieParser());
 
-async function main() { 
-  await mongoose.connect("mongodb+srv://adheethi2003:2ySCBdVEiftjJT6@cluster0.iio96.mongodb.net/"); 
+// Basic test route
+app.get('/', (req, res) => {
+  res.send('Hello from Chroplex Backend!');
+});
+
+// Routes
+app.use('/api', authRoutes);
+app.use('/adm', adminRoutes);
+app.use('/usr', userRoutes);
+
+// Connect to MongoDB
+async function connectToDB() {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log("✅ MongoDB connected");
+  } catch (err) {
+    console.error("❌ MongoDB connection error:", err.message);
+    process.exit(1);
+  }
 }
 
-main()
-  .then(() => console.log('db connected'))
-  .catch(err => console.log(err));
-
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`); 
+// Start server
+connectToDB().then(() => {
+  app.listen(port, () => {
+    console.log(`🚀 Server running at http://localhost:${port}`);
+  });
 });
