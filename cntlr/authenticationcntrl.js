@@ -1,92 +1,112 @@
-const user=require("../models/profile")
-const bcrypt = require("bcrypt")
-const jwt = require("jsonwebtoken")
+const user = require("../models/profile");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const cloudinary=require('../utls/cloudinary')
 
-const signup=async(req,res)=>
-{
-    try//checking user aalready exists or not
-    {
-        const{name,email,password,role}=req.body
-        const exitstinguser=await user.findOne({email})
-        if(exitstinguser)
-        {
-            return res.status(400).json({message:"user aldredy exist"})
-
+const signup = async (req, res) => {
+    try {
+        console.log(req.body)
+        const file=req.file
+        const cloudinaryResponse = await cloudinary.uploader.upload(file.path)
+        const { name, email, password, role } = req.body;
+        const existingUser = await user.findOne({ email });
+        
+        if (existingUser) {
+            return res.status(400).json({ message: "User already exists" });
         }
-        //hashing the password
-        const handlepassword=await bcrypt.hash(password,10)
-        //new user
-        const newuser=new user({
+
+        // Hashing the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Create new user
+        const newUser = new user({
             name,
             email,
-            password:handlepassword,
+            password: hashedPassword,
             role,
-           
+            image:cloudinaryResponse.url,
         });
-        await newuser.save()
-        res.status(201).json({message:"user created sucessfully",user:newuser})
-        console.log(newuser); // See what is being saved
 
-
+        await newUser.save();
+        res.status(201).json({ 
+            message: "User created successfully", 
+            user: {
+                id: newUser._id,
+                name: newUser.name,
+                email: newUser.email,
+                role: newUser.role,
+                image:newUser.image
+            } 
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            message: "Error in creating profile", 
+            error: error.message 
+        });
     }
-    catch(error)
-    {
-         res.status(500).json({ message: "error in creating profile", error: error.message });
-    }
-}
+};
 
-//login segemnent
-const signin=async (req,res)=>
-{
-    try{
-        const{email,password}=req.body
-        //find user is exists
-        const euser = await user.findOne({email})
-        if(!euser)
-        {
-            return res.status(400).json({message:"uer not exist"})
+const signin = async (req, res) => {
+    try {
+        const {email, password, role } = req.body;
+        
+        // Find user
+        const existingUser = await user.findOne({ email });
+        if (!existingUser) {
+            return res.status(400).json({ message: "User not found" });
         }
-        //comparing the user and the password
-        const ispassvalid=await bcrypt.compare(password,euser.password)
-        if(!ispassvalid)
-        {
-            return res.status(401).json({message:"invalid credentials"})
-        }
-        //creating token
-          const token = jwt.sign(
-      {
-        id: euser._id,
-        role: euser.role, // include role for authorization later
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
-    );
 
-    //  Send success response
-    res.status(200).json({
-      message: "Login successful",
-      token,
-      user: {
-        id: euser._id,
-        name: euser.name,
-        email: euser.email,
-        role: euser.role,
-      },
-    });
+        // Verify password
+        const isPasswordValid = await bcrypt.compare(password, existingUser.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: "Invalid credentials" });
+        }
+
+        // Verify role
+        if (existingUser.role !== role) {
+            return res.status(403).json({ 
+                message: `Access denied. You are not authorized as ${role}` 
+            });
+        }
+
+        // Create token
+        const token = jwt.sign(
+            {
+                id: existingUser._id,
+                role: existingUser.role,
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "1h",
+            }
+        );
+
+        // Send success response
+        res.status(200).json({
+            message: "Login successful",
+            token,
+            user: {
+                id: existingUser._id,
+                name: existingUser.name,
+                email: existingUser.email,
+                role: existingUser.role,
+                image:existingUser.image
+            },
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            message: "Login failed", 
+            error: error.message 
+        });
     }
-    catch(error)
-    {
-        res.status(500).json({message:"login failed",error:error.message})
-    }
-}
-const adminlogout=async(req,res)=>
-{
-    res.status(200).json({message:"admin logout successful"})
-}
-const userlogout=async(req,res)=>
-{
-    res.status(200).json({message:"user logout successful"})
-}
-module.exports = { signup, signin,adminlogout,userlogout};
+};
+
+const adminlogout = async (req, res) => {
+    res.status(200).json({ message: "Admin logout successful" });
+};
+
+const userlogout = async (req, res) => {
+    res.status(200).json({ message: "User logout successful" });
+};
+
+module.exports = { signup, signin, adminlogout, userlogout };

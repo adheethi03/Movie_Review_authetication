@@ -1,6 +1,8 @@
 const Movie=require("../models/moviesandreview")
 const Profile = require('../models/profile')
 const { use } = require("../rotes/user")
+
+
 const usercntrl= async(req,res)=>
 {
    try{
@@ -52,8 +54,8 @@ const searchmovieuser=async(req,res)=>
 //like the movie
 const likemovie = async (req, res) => {
   try {
-    const { id } = req.params;
-    const likedmovie = await Movie.findOne({ _id: id });
+    const { title } = req.params;
+    const likedmovie = await Movie.findOne({ title: title });
 
     if (!likedmovie) {
       return res.status(400).json({ message: "movie not found" });
@@ -88,7 +90,7 @@ const reviewmovie=async(req,res)=>
   }
   const newreview=
   {
-    userid,
+    image:founduser.image || "",
     name:founduser.name,
     comment,
     rating
@@ -98,7 +100,7 @@ const reviewmovie=async(req,res)=>
   foundmovie.review.push(newreview)
   
   await foundmovie.save()
-  res.status(200).json({mesage:"comment added succesfully"})
+  res.status(200).json({message:"comment added succesfully"})
   }
    catch(error)
   {

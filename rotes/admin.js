@@ -1,15 +1,14 @@
 const express = require("express")
 const admin=express.Router()
 const {admincntrl,movies,movieshowing,dltmovies,searchmovie,editmovie,viewusers,usersearchanddlt, dltreview}=require("../cntlr/admincntrl")
+const upload =require("../middleware/multer")
 admin.post("/admin",admincntrl)
-admin.post("/admin/movies",movies)
+admin.post("/admin/movies",upload.single('movie_image'),movies)
 admin.get("/admin/movies/show",movieshowing)
 admin.delete("/admin/movies/:mname",dltmovies)
 admin.get("/admin/movies/show/:smovie",searchmovie)
 admin.put("/admin/movies/show/:emovie",editmovie)
 admin.get("/admin/userslist",viewusers)
 admin.delete("/admin/user/:searchuser",usersearchanddlt)
-admin.delete("/admin/:movieId/review/:reviewId",dltreview
-    
-)
+admin.delete("/admin/:movieId/review/:reviewId",dltreview)
 module.exports= admin

@@ -1,5 +1,7 @@
 const Movie = require("../models/moviesandreview")
 const Profile=require("../models/profile")
+
+const cloudinary=require('../utls/cloudinary')
 const admincntrl= async(req,res)=>
 {
     res.status(200).json({message:"welcome to admin daashboard"})
@@ -8,7 +10,11 @@ const admincntrl= async(req,res)=>
 const movies=async(req,res)=>
 {
     try{
-    const{title,genre,year,Language,description}=req.body
+         const file=req.file
+ 
+    const cloudinaryResponse = await cloudinary.uploader.upload(file.path)
+    console.log(cloudinaryResponse)
+    const{title,genre,year,Language, duration,Director,writers,Stars,Catogery,description,trailer_link}=req.body
     if(!title||!genre)
     {
         return res.status(401).json({message:"genre and title is must"})
@@ -18,15 +24,25 @@ const movies=async(req,res)=>
         title,
         genre,
         year,
+        duration,
+        Catogery,
+        Director,
+        Stars,
+        writers,
         Language,
-        description
+        description,
+        movie_image:cloudinaryResponse.url,
+        trailer_link
     })
     await newmovie.save()
+   
     return res.status(200).json({message:"Movie added succesfully to the database",movie:newmovie})
-
+    //take file details from multer
+    
     }
     catch(error)
     {
+         console.error("Error adding movie:", error);
         return res.status(500).json({message:"Error in adding movie",error:error.message})
     }
 }
@@ -40,10 +56,12 @@ const movieshowing=async(req,res)=>
         res.status(200).json({message:"no movies found"})
 
     }
+    
     res.status(200).json({
       
             movies: movies
     })
+      
   }  
   catch(error)
   {
