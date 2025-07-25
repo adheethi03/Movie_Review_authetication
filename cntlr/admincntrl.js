@@ -37,7 +37,6 @@ const movies=async(req,res)=>
     await newmovie.save()
    
     return res.status(200).json({message:"Movie added succesfully to the database",movie:newmovie})
-    //take file details from multer
     
     }
     catch(error)
@@ -157,26 +156,4 @@ const usersearchanddlt=async(req,res)=>
         res.status(500).json({message:"error in deleting",error:error.message})
     }
 }
-//dlting review
-const dltreview = async (req, res) => {
-  try {
-    const { movieId, reviewId } = req.params;
-
-    const movie = await Movie.findByIdAndUpdate(
-      movieId,
-      { $pull: { reviews: { _id: reviewId } } },
-      { new: true }
-    );
-
-    if (!movie) {
-      return res.status(404).json({ message: "Movie not found" });
-    }
-
-    res.status(200).json({ message: "Review deleted successfully", updatedMovie: movie });
-
-  } catch (error) {
-    res.status(500).json({ message: "Error deleting review", error: error.message });
-  }
-};
-
-module.exports={movies,admincntrl,movieshowing,dltmovies,searchmovie,editmovie,viewusers,usersearchanddlt,dltreview}
+module.exports={movies,admincntrl,movieshowing,dltmovies,searchmovie,editmovie,viewusers,usersearchanddlt}

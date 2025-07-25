@@ -5,47 +5,61 @@ const cloudinary=require('../utls/cloudinary')
 
 const signup = async (req, res) => {
     try {
-        console.log(req.body)
-        const file=req.file
-        const cloudinaryResponse = await cloudinary.uploader.upload(file.path)
+        console.log(req.body);
+
         const { name, email, password, role } = req.body;
+
+        if (!name || !email || !password || !role) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
         const existingUser = await user.findOne({ email });
-        
         if (existingUser) {
             return res.status(400).json({ message: "User already exists" });
         }
 
-        // Hashing the password
+        // Handle file upload only if file is provided
+        let imageUrl = null;
+        if (req.file) {
+            const cloudinaryResponse = await cloudinary.uploader.upload(req.file.path);
+            imageUrl = cloudinaryResponse.url;
+        } else {
+            
+            imageUrl = "https://res.cloudinary.com/dhilrelgq/image/upload/v1752072616/451-4517876_default-profile-hd-png-download_ha0u35.png";
+        }
+
+       
         const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // Create new user
+
+        // Create user
         const newUser = new user({
             name,
             email,
             password: hashedPassword,
             role,
-            image:cloudinaryResponse.url,
+            image: imageUrl,
         });
 
         await newUser.save();
-        res.status(201).json({ 
-            message: "User created successfully", 
+
+        res.status(201).json({
+            message: "User created successfully",
             user: {
                 id: newUser._id,
                 name: newUser.name,
                 email: newUser.email,
                 role: newUser.role,
-                image:newUser.image
-            } 
+                image: newUser.image,
+            },
         });
     } catch (error) {
-        res.status(500).json({ 
-            message: "Error in creating profile", 
-            error: error.message 
+        console.error("Signup error:", error);
+        res.status(500).json({
+            message: "Error in creating profile",
+            error: error.message,
         });
     }
 };
-
 const signin = async (req, res) => {
     try {
         const {email, password, role } = req.body;
